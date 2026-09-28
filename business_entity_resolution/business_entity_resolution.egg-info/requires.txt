@@ -1,0 +1,9 @@
+duckdb
+pyarrow
+numpy
+scipy
+scikit-learn
+lightgbm
+catboost
+rapidfuzz
+psutil

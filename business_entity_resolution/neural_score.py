@@ -16,6 +16,8 @@ def main():
     parser.add_argument('--tag', required=True)
     parser.add_argument('--top-k', type=int, default=1)
     parser.add_argument('--batch-size', type=int, default=128)
+    parser.add_argument('--candidate-tsv', required=True)
+    parser.add_argument('--model-dir', required=True)
     args = parser.parse_args()
 
     from sentence_transformers import CrossEncoder
@@ -28,12 +30,11 @@ def main():
     import torch
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f"Loading cross-encoder model on {device.upper()}...")
-    model = CrossEncoder(str(root / 'finetuned_cross_encoder_ultra'), max_length=256, device=device)
+    model = CrossEncoder(args.model_dir, max_length=256, device=device)
 
     db = ctx.db()
     
-    # Read the candidate_pairs.tsv from the amazon_ml_result folder directly!
-    candidates_tsv = r"C:\Users\jaide\Documents\Codex\2026-09-25\c\outputs\amazon_ml_result\candidate_pairs.tsv"
+    candidates_tsv = args.candidate_tsv
     
     print("Fetching candidates from TSV and joining text...")
     

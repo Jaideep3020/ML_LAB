@@ -49,8 +49,13 @@ import pyarrow.parquet as pq
 from pathlib import Path
 import duckdb
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--run-dir', required=True)
+args = parser.parse_args()
+
 # ── Configuration ──────────────────────────────────────────────────────────────
-run_dir  = Path(r"C:\Users\jaide\Documents\Codex\2026-09-25\the\work\full")
+run_dir  = Path(args.run_dir)
 db_path  = run_dir / 'cache' / 'data.duckdb'
 
 # Output: merged candidate parquet for neural_score.py

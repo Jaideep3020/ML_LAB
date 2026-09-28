@@ -32,6 +32,7 @@ def main():
     )
     parser.add_argument('--run-dir', required=True)
     parser.add_argument('--out-dir', required=True)
+    parser.add_argument('--scores-path', required=True, help='Path to the parquet file containing neural scores')
     # Global threshold is kept as a fallback override (optional)
     parser.add_argument('--threshold', type=float, default=None,
                         help='Override all country-specific thresholds with a single value')
@@ -39,7 +40,7 @@ def main():
 
     run_dir     = Path(args.run_dir)
     out_dir     = Path(args.out_dir)
-    scores_path = run_dir / 'cache' / 'neural_scores_test.parquet'
+    scores_path = Path(args.scores_path)
     db_path     = run_dir / 'cache' / 'data.duckdb'
 
     if not scores_path.exists():
@@ -82,7 +83,30 @@ def main():
         name_sim_clause = ""
         print("[INFO] Name similarity guard disabled.")
 
-    # ── Main query ────────────────────────────────────────────────
+    out_matching = out_dir / 'matching_results.tsv'
+    out_candidates = out_dir / 'candidate_pairs.tsv'
+
+    # ── Output candidate_pairs.tsv ─────────────────────────────────
+    # All qid and tid pairs that were considered
+    cand_query = f"""
+    COPY (
+        SELECT q.entity_id AS source1_entity_id,
+               coalesce(string_agg(DISTINCT ns_raw.tid, ',' ORDER BY ns_raw.tid), '') AS candidate_entity_ids
+        FROM db.test_s1 q
+        LEFT JOIN read_parquet('{scores_path}') ns_raw ON q.entity_id = ns_raw.qid
+        JOIN (
+            SELECT entity_id FROM db.test_s2
+            UNION ALL
+            SELECT entity_id FROM db.test_s3
+        ) tgt ON tgt.entity_id = ns_raw.tid
+        GROUP BY q.entity_id, q.rid
+        ORDER BY q.rid
+    ) TO '{out_candidates}' (FORMAT CSV, HEADER true, DELIMITER '\t', QUOTE '', NULL '')
+    """
+    print(f"Generating {out_candidates} ...")
+    con.execute(cand_query)
+
+    # ── Output matching_results.tsv ─────────────────────────────────
     query = f"""
     COPY (
         SELECT q.entity_id AS source1_entity_id,
@@ -112,10 +136,10 @@ def main():
             GROUP BY ns.qid
         ) x ON q.entity_id = x.qid
         ORDER BY q.rid
-    ) TO '{out_tsv}' (FORMAT CSV, HEADER true, DELIMITER '\t', QUOTE '', NULL '')
+    ) TO '{out_matching}' (FORMAT CSV, HEADER true, DELIMITER '\t', QUOTE '', NULL '')
     """
 
-    print(f"\nGenerating {out_tsv} ...")
+    print(f"\nGenerating {out_matching} ...")
     con.execute(query)
     print(f"Done! Country-aware predictions written to: {out_tsv}")
 

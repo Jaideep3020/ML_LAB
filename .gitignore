@@ -1,0 +1,9 @@
+# Ignore large files and virtual environments
+*.zip
+.venv/
+__pycache__/
+.pytest_cache/
+*.safetensors
+*.bin
+c/
+the/

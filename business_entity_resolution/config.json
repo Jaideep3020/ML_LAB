@@ -1,0 +1,18 @@
+{
+  "seed": 2026,
+  "memory_limit": "8GB",
+  "threads": 4,
+  "batch_size": 2000,
+  "query_limit": 100,
+  "candidate_budgets": [20, 50, 100],
+  "posting_limit": 2000,
+  "retrieval_recall_target": 0.99,
+  "max_negatives_per_entity": 20,
+  "training_entity_limit": 200000,
+  "search_trials": 20,
+  "boosting_rounds": 500,
+  "max_training_pairs": 12000000,
+  "catboost_pair_limit": 1500000,
+  "disk_reserve_gb": 15,
+  "cross_country": false
+}
